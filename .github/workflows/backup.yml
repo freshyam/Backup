@@ -1,0 +1,32 @@
+name: Backup MySQL Railway
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Instalar MySQL Client
+        run: sudo apt-get update && sudo apt-get install -y mysql-client
+
+      - name: Crear backup
+        run: |
+          mysqldump \
+            -h ${{ secrets.DB_HOST }} \
+            -P ${{ secrets.DB_PORT }} \
+            -u ${{ secrets.DB_USER }} \
+            -p${{ secrets.DB_PASS }} \
+            ${{ secrets.DB_NAME }} > backup.sql
+
+      - name: Comprimir backup
+        run: gzip backup.sql
+
+      - name: Subir backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup
+          path: backup.sql.gz
