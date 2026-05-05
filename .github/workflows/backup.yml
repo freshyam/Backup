@@ -1,4 +1,4 @@
-name: Backup MySQL Railway
+name: Backup MySQL (Aiven SSL)
 
 on:
   schedule:
@@ -13,6 +13,9 @@ jobs:
       - name: Instalar MySQL Client
         run: sudo apt-get update && sudo apt-get install -y mysql-client
 
+      - name: Crear archivo CA
+        run: echo "${{ secrets.DB_CA_CERT }}" > ca.pem
+
       - name: Crear backup
         run: |
           mysqldump \
@@ -20,6 +23,7 @@ jobs:
             -P ${{ secrets.DB_PORT }} \
             -u ${{ secrets.DB_USER }} \
             -p${{ secrets.DB_PASS }} \
+            --ssl-ca=ca.pem \
             ${{ secrets.DB_NAME }} > backup.sql
 
       - name: Comprimir backup
@@ -28,5 +32,5 @@ jobs:
       - name: Subir backup
         uses: actions/upload-artifact@v4
         with:
-          name: backup
+          name: backup-${{ github.run_id }}
           path: backup.sql.gz
